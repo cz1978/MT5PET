@@ -1,0 +1,51 @@
+<Window x:Class="TradePet.App.Views.MiniPositionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="330" SizeToContent="Height" WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize">
+    <Border Background="#E8121923" BorderBrush="#35465B" BorderThickness="1" CornerRadius="11" Padding="10">
+        <StackPanel>
+            <Grid MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock Foreground="#F2F5F4" FontWeight="SemiBold">
+                    <Run Text="持仓 "/><Run Text="{Binding OpenPositionCount}"/><Run Text=" 笔  "/>
+                    <Run Text="{Binding FloatingPnl, StringFormat={}{0:+0.##;-0.##;0}}" Foreground="{Binding FloatingPnlColor}"/>
+                </TextBlock>
+                <TextBlock Grid.Column="1" Text="{Binding PositionDataStatus}" Foreground="#F0B85C" FontSize="10" Margin="8,0"/>
+                <Button Grid.Column="2" Click="Pin_Click" Padding="5,1">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                            <Setter Property="Content" Value="固定"/>
+                            <Setter Property="Opacity" Value="0.45"/>
+                            <Setter Property="ToolTip" Value="当前可拖动；点击后固定位置"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding MiniPositionPinned}" Value="True">
+                                    <Setter Property="Opacity" Value="1"/>
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                    <Setter Property="Background" Value="#1B6655"/>
+                                    <Setter Property="BorderBrush" Value="#58C6A5"/>
+                                    <Setter Property="ToolTip" Value="当前位置已固定；点击后恢复拖动"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Grid.Column="3" Content="隐藏" Click="Hide_Click" Padding="5,1" Margin="5,0,0,0" ToolTip="隐藏持仓浮窗；可从托盘菜单重新显示"/>
+            </Grid>
+            <TextBlock Text="{Binding PositionCard}" Foreground="#AAB7C4" FontSize="10" Margin="0,5,0,0"/>
+            <Expander Header="展开全部" Visibility="{Binding HasPositions, Converter={StaticResource BoolToVisibility}}" Margin="0,5,0,0">
+                <ItemsControl ItemsSource="{Binding Positions}">
+                    <ItemsControl.ItemTemplate><DataTemplate>
+                        <Grid Margin="0,3"><Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="55"/><ColumnDefinition Width="60"/><ColumnDefinition Width="65"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Symbol}" Foreground="#EEF3F1"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Side}" Foreground="#AAB7C4"/>
+                            <TextBlock Grid.Column="2" Text="{Binding Profit}" Foreground="{Binding ProfitColor}"/>
+                            <TextBlock Grid.Column="3" Text="{Binding Duration}" Foreground="#8491A0"/>
+                            <TextBlock Grid.Column="4" Text="{Binding StopLossStatus}" Foreground="#F0B85C" FontSize="10" TextTrimming="CharacterEllipsis"/>
+                        </Grid>
+                    </DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Expander>
+        </StackPanel>
+    </Border>
+</Window>

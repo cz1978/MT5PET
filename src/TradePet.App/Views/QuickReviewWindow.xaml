@@ -1,0 +1,33 @@
+<Window x:Class="TradePet.App.Views.QuickReviewWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="平仓后快速复盘" Width="420" Height="460" WindowStartupLocation="CenterScreen" Topmost="True" ResizeMode="NoResize" Background="#121923">
+    <Grid Margin="18"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel><TextBlock Text="平仓后快速复盘" Foreground="#F2F5F4" FontSize="20" FontWeight="Bold"/><TextBlock x:Name="TradeText" Foreground="#AAB7C4" Margin="0,4,0,12"/></StackPanel>
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="是否按计划" Foreground="#EEF3F1"/><ComboBox x:Name="PlanBox" SelectedIndex="2" Margin="0,4,0,9"><ComboBoxItem Content="是"/><ComboBoxItem Content="否"/><ComboBoxItem Content="不确定"/></ComboBox>
+            <TextBlock Text="退出原因（已自动分析，可快捷纠正）" Foreground="#EEF3F1"/>
+            <WrapPanel Margin="0,5,0,2">
+                <WrapPanel.Resources>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Padding" Value="8,4"/>
+                        <Setter Property="Margin" Value="0,0,6,6"/>
+                        <Setter Property="FontSize" Value="12"/>
+                    </Style>
+                </WrapPanel.Resources>
+                <Button Content="止盈" Tag="止盈离场" Click="ReasonPreset_Click"/>
+                <Button Content="止损" Tag="止损离场" Click="ReasonPreset_Click"/>
+                <Button Content="计划完成" Tag="计划完成" Click="ReasonPreset_Click"/>
+                <Button Content="结构失效" Tag="结构失效" Click="ReasonPreset_Click"/>
+                <Button Content="行情反转" Tag="行情反转" Click="ReasonPreset_Click"/>
+                <Button Content="风险收缩" Tag="风险收缩" Click="ReasonPreset_Click"/>
+                <Button Content="手动提前" Tag="手动提前离场" Click="ReasonPreset_Click"/>
+                <Button Content="情绪操作" Tag="情绪操作" Click="ReasonPreset_Click"/>
+            </WrapPanel>
+            <TextBox x:Name="ExitReasonBox" Margin="0,0,0,3"/>
+            <TextBlock x:Name="AnalysisText" Foreground="#7FB7A9" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,9"/>
+            <TextBlock Text="改进事项" Foreground="#EEF3F1"/><TextBox x:Name="ImproveBox" Height="65" AcceptsReturn="True" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="跳过" Click="Skip_Click" Padding="10,5"/><Button Content="稍后" Click="Later_Click" Padding="10,5" Margin="8,0"/><Button Content="保存到交易档案" Click="Save_Click" Padding="10,5"/>
+        </StackPanel>
+    </Grid>
+</Window>

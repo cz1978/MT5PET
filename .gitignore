@@ -1,0 +1,44 @@
+# Build and tooling output
+**/bin/
+**/obj/
+/.vs/
+/.idea/
+TestResults/
+/artifacts/
+/.venv/
+__pycache__/
+*.py[cod]
+*.user
+*.suo
+
+# Local TradePet workspaces, logs, dumps, and backups
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.log
+*.dmp
+*.dump
+*.bak
+*.backup
+/runtime-data/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+local.settings.json
+*.secrets.json
+*.pfx
+*.p12
+*.pem
+*.key
+*.snk
+*.cer
+*.crt
+
+# Generated MT5 and local visual-verification artifacts
+*.ex5
+/design-qa.md
+/design-qa-*.png

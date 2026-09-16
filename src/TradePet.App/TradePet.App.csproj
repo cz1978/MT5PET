@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>TradePet</AssemblyName>
+    <RootNamespace>TradePet.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\tradepet-icon.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TradePet.Application\TradePet.Application.csproj" />
+    <ProjectReference Include="..\TradePet.Core\TradePet.Core.csproj" />
+    <ProjectReference Include="..\TradePet.Infrastructure\TradePet.Infrastructure.csproj" />
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\baoer-pet\pet.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\baoer-pet\spritesheet.webp" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Runtime\TradePetBridge.ex5" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\mt5\TradePetBridge.mq5" Link="Runtime\TradePetBridge.mq5" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\python\tradepet_mt5_worker.py" Link="Runtime\python\tradepet_mt5_worker.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\python\tradepet_mt5_connection.py" Link="Runtime\python\tradepet_mt5_connection.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\python\tradepet_mt5_history_worker.py" Link="Runtime\python\tradepet_mt5_history_worker.py" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\python\requirements.txt" Link="Runtime\python\requirements.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\scripts\setup-python.ps1" Link="Runtime\setup-python.ps1" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\tradepet-icon.ico" />
+  </ItemGroup>
+</Project>

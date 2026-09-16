@@ -1,0 +1,20 @@
+* text=auto
+.gitattributes text eol=lf
+
+*.cs text eol=lf
+*.csproj text eol=lf
+*.json text eol=lf
+*.manifest text eol=lf
+*.md text eol=lf
+*.mq5 text eol=lf
+*.props text eol=lf
+*.ps1 text eol=lf
+*.py text eol=lf
+*.sha256 text eol=lf
+*.sln text eol=lf
+*.txt text eol=lf
+*.xaml text eol=lf
+
+*.ico binary
+*.png binary
+*.webp binary

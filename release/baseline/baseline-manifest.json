@@ -1,0 +1,168 @@
+{
+  "FormatVersion": 1,
+  "CreatedAtUtc": "2026-09-09T14:55:01.9181009+00:00",
+  "Product": {
+    "Name": "TradePet",
+    "Version": "1.0.0-rc.1",
+    "ReleaseChannel": "candidate"
+  },
+  "Contracts": {
+    "SchemaVersion": 8.0,
+    "ProtocolVersion": "1.0",
+    "WorkerVersion": "0.1.0",
+    "HistoryWorkerVersion": "1.0.0",
+    "ReviewExportFormatVersion": 1,
+    "BackupFormatVersion": 1
+  },
+  "Repository": {
+    "Branch": "master",
+    "Head": null,
+    "State": "unborn",
+    "HasConfiguredAuthorIdentity": false,
+    "SourceFileCount": 128,
+    "SourceTreeSha256": "f8d76455200386740f1425ea6c2bb16f88fcba265f46d51573970d71d563c0ca",
+    "SourceFileList": "source-files.sha256"
+  },
+  "Toolchain": {
+    "DotNetSdk": "8.0.424",
+    "PowerShell": "7.6.5",
+    "OsBuild": "10.0.26200.0"
+  },
+  "Dependencies": [
+    {
+      "Ecosystem": "NuGet",
+      "Name": "Microsoft.Data.Sqlite",
+      "Version": "8.0.20",
+      "DeclaredIn": "src/TradePet.Infrastructure/TradePet.Infrastructure.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "Microsoft.NET.Test.Sdk",
+      "Version": "17.12.0",
+      "DeclaredIn": "tests/TradePet.Application.Tests/TradePet.Application.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "Microsoft.NET.Test.Sdk",
+      "Version": "17.12.0",
+      "DeclaredIn": "tests/TradePet.Core.Tests/TradePet.Core.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "Microsoft.NET.Test.Sdk",
+      "Version": "17.12.0",
+      "DeclaredIn": "tests/TradePet.Infrastructure.Tests/TradePet.Infrastructure.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "SkiaSharp.Views.WPF",
+      "Version": "2.88.9",
+      "DeclaredIn": "src/TradePet.App/TradePet.App.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit",
+      "Version": "2.9.2",
+      "DeclaredIn": "tests/TradePet.Application.Tests/TradePet.Application.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit",
+      "Version": "2.9.2",
+      "DeclaredIn": "tests/TradePet.Core.Tests/TradePet.Core.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit",
+      "Version": "2.9.2",
+      "DeclaredIn": "tests/TradePet.Infrastructure.Tests/TradePet.Infrastructure.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit.runner.visualstudio",
+      "Version": "2.8.2",
+      "DeclaredIn": "tests/TradePet.Application.Tests/TradePet.Application.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit.runner.visualstudio",
+      "Version": "2.8.2",
+      "DeclaredIn": "tests/TradePet.Core.Tests/TradePet.Core.Tests.csproj"
+    },
+    {
+      "Ecosystem": "NuGet",
+      "Name": "xunit.runner.visualstudio",
+      "Version": "2.8.2",
+      "DeclaredIn": "tests/TradePet.Infrastructure.Tests/TradePet.Infrastructure.Tests.csproj"
+    },
+    {
+      "Ecosystem": "Python",
+      "Name": "MetaTrader5",
+      "Version": "5.0.6147",
+      "DeclaredIn": "python/requirements.txt"
+    }
+  ],
+  "ExistingPortableArtifact": {
+    "Available": true,
+    "Kind": "directory-tree",
+    "FileCount": 488,
+    "Bytes": 183602002.0,
+    "TreeSha256": "9f8bfcd47895b0aa81e903310e3e4e2c1940288a37f7a43791165e8cba01bf77",
+    "ExecutableSha256": "ea062748a38f322cc755e48be4f333652efc411c8b10e88a318cb32d73195063"
+  },
+  "PrivateDataBackup": {
+    "Available": true,
+    "BackupId": "wp01-baseline-20260909T144801Z",
+    "SchemaVersion": 8,
+    "QuickCheck": "ok",
+    "ForeignKeyViolations": 0,
+    "DatabaseSha256": "19ca99b68570a1d0b3e01b90a072dcd02092699f3ab29040f19b642880841c03",
+    "ManifestSha256": "b435c4c4ad0809578328a04d22434a9ee535a1f5183004fa2156faab797c4978",
+    "Location": "private-local-backup-outside-repository"
+  },
+  "Samples": [
+    {
+      "Id": "current-private-workspace",
+      "Kind": "private",
+      "SchemaVersion": 8,
+      "Availability": "verified-external"
+    },
+    {
+      "Id": "synthetic-automated-tests",
+      "Kind": "synthetic",
+      "SchemaVersion": 8.0,
+      "Availability": "in-repository"
+    },
+    {
+      "Id": "legacy-schema-1-through-8",
+      "Kind": "private-redacted-fixtures",
+      "SchemaVersion": "1-8",
+      "Availability": "not-yet-curated",
+      "PlannedWorkPackage": "WP08"
+    }
+  ],
+  "DefectLedger": [
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "F06",
+    "F07",
+    "F08",
+    "F09",
+    "F10"
+  ],
+  "Safety": {
+    "ForbiddenSensitiveFileTypesPresent": false,
+    "LikelySecretsOrUserPathsPresent": false,
+    "TradingWriteCapabilityTokensPresent": false
+  },
+  "ExternalConditions": {
+    "E01PublisherAndAssetRights": "unverified",
+    "E02ProductionSigning": "unavailable",
+    "E03DistributionEndpoint": "unavailable",
+    "E04NativeAcceptanceEnvironment": "unavailable",
+    "E05RepositoryAndBuildIdentity": "git-author-missing"
+  }
+}

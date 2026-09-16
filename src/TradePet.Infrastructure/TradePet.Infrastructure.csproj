@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TradePet.Application\TradePet.Application.csproj" />
+    <ProjectReference Include="..\TradePet.Core\TradePet.Core.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.20" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="TradePet.Infrastructure.Tests" />
+  </ItemGroup>
+</Project>

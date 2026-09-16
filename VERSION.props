@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>rc.1</VersionSuffix>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>$(VersionPrefix)-$(VersionSuffix)</InformationalVersion>
+    <TradePetReleaseChannel>candidate</TradePetReleaseChannel>
+    <TradePetSchemaVersion>10</TradePetSchemaVersion>
+    <TradePetProtocolVersion>1.0</TradePetProtocolVersion>
+    <TradePetWorkerVersion>0.1.0</TradePetWorkerVersion>
+    <TradePetHistoryWorkerVersion>1.0.0</TradePetHistoryWorkerVersion>
+    <TradePetReviewExportFormatVersion>1</TradePetReviewExportFormatVersion>
+    <TradePetBackupFormatVersion>1</TradePetBackupFormatVersion>
+  </PropertyGroup>
+</Project>
