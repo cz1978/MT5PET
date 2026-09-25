@@ -1,12 +1,12 @@
 # TradePet 安装与升级说明
 
-适用于 **1.0.0-rc.2 / Windows 10、11 x64**。当前是候选版；MT5 提供完整功能，MT4 提供实时监控。TradePet 只读采集，不执行下单、平仓或改单。
+适用于 **1.0.0-rc.3 / Windows 10、11 x64**。当前是候选版；MT5 提供完整功能，MT4 提供实时监控。TradePet 只读采集，不执行下单、平仓或改单。
 
 ## 下载并启动
 
-1. 打开 [GitHub 发布页](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.2)。
-2. 在 Assets 中下载 `TradePet-1.0.0-rc.2-win-x64.zip`。`Source code` 是开发用源码，不是可运行安装包。
-3. 将 ZIP **完整解压**到自己的应用目录，例如 `D:\Apps\TradePet-1.0.0-rc.2`。
+1. 打开 [GitHub 发布页](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.3)。
+2. 在 Assets 中下载 `TradePet-1.0.0-rc.3-win-x64.zip`。`Source code` 是开发用源码，不是可运行安装包。
+3. 将 ZIP **完整解压**到自己的应用目录，例如 `D:\Apps\TradePet-1.0.0-rc.3`。
 4. 运行解压目录内的 `TradePet.exe`，跟随四步设置向导完成配置。不要在压缩包内直接运行，也不要只复制 EXE。
 
 便携包已包含 .NET 8 运行时，无需安装 .NET SDK。保留同目录的 DLL、`Runtime` 和 `Assets` 文件夹。
@@ -14,10 +14,12 @@
 发布页还提供 `SHA256SUMS.txt`。需要核对下载完整性时，在 ZIP 所在目录执行并与该文件比较：
 
 ```powershell
-Get-FileHash .\TradePet-1.0.0-rc.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\TradePet-1.0.0-rc.3-win-x64.zip -Algorithm SHA256
 ```
 
 该校验用于确认文件一致性，不代替数字签名。当前包未做代码签名；遇到 Windows 提示时先核对来源及哈希，不要关闭系统防护。
+
+便携包中的 `LICENSE` 是 TradePet 的 MIT 许可证。允许个人使用、商用、修改和分发，包括收费分发；分发时须保留版权声明和许可声明。第三方组件适用各自许可证。`rc.3` 相比 `rc.2` 仅更新许可、文档和版本信息，安装与连接方式相同。
 
 ## 连接 MT5
 

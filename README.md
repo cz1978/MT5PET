@@ -2,7 +2,7 @@
 
 > 陪你交易，不替你交易。
 
-**当前版本：1.0.0-rc.2（候选版，2026-09-25）** · [下载 Windows 便携版](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.2) · [安装与升级说明](INSTALL.md) · [更新日志](CHANGELOG.md)
+**当前版本：1.0.0-rc.3（候选版，2026-09-25）** · [下载 Windows 便携版](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.3) · [安装与升级说明](INSTALL.md) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
 
 TradePet 是一款面向 Windows 的本地交易桌宠。它以只读方式连接 MT5，把持仓、风险、交易计划、复盘、宏观事件和每日报告收进桌面助手里；MT4 目前支持账户、持仓、挂单采集及浮亏监控。
 
@@ -63,7 +63,7 @@ TradePet 会把完整亏损交易投影为可追溯的价格区域，记录进�
 
 ## 安装与首次连接
 
-普通用户请下载发布页中的 **`TradePet-1.0.0-rc.2-win-x64.zip`**，完整解压后运行 `TradePet.exe`。不要下载 GitHub 自动生成的 `Source code` 源码包作为安装包，也不要单独移动 EXE。
+普通用户请下载发布页中的 **`TradePet-1.0.0-rc.3-win-x64.zip`**，完整解压后运行 `TradePet.exe`。不要下载 GitHub 自动生成的 `Source code` 源码包作为安装包，也不要单独移动 EXE。
 
 便携包已包含 .NET 8 运行时、MT4/MT5 只读插件和安装文档，无需另装 .NET SDK。MT5 另需 64 位 Python 3.13；MT4 无需 Python。首次配置、升级保留数据、校验安装包和排障步骤见 [INSTALL.md](INSTALL.md)。
 
@@ -138,4 +138,6 @@ TradePet 目前是持续迭代中的个人工具，主要在 Windows x64、WeTra
 
 ## 许可证
 
-当前仓库尚未附加开源许可证。在 `LICENSE` 文件落地前，代码可公开阅读，但不代表已授权复制、修改或再分发。
+TradePet 采用 [MIT License](LICENSE)，版权署名为 `Copyright (c) 2026 cz1978`。允许使用、修改、商用和再分发（包括闭源或收费版本），但须保留版权声明与许可声明；完整条款以 `LICENSE` 为准。软件按原样提供，不附带保证。
+
+第三方依赖、运行时及第三方素材仍遵循各自的许可证，不因本项目采用 MIT 而改变。
