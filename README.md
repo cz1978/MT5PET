@@ -2,7 +2,7 @@
 
 > 陪你交易，不替你交易。
 
-**当前版本：1.0.0-rc.3（候选版，2026-09-25）** · [下载 Windows 便携版](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.3) · [安装与升级说明](INSTALL.md) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
+**当前版本：1.0.0-rc.3（候选版，2026-09-25）** · [下载 Windows 便携版](https://github.com/cz1978/tradepet/releases/tag/v1.0.0-rc.3) · [安装与升级说明](INSTALL.md) · [更新日志](CHANGELOG.md) · [MIT 许可证](LICENSE)
 
 TradePet 是一款面向 Windows 的本地交易桌宠。它以只读方式连接 MT5，把持仓、风险、交易计划、复盘、宏观事件和每日报告收进桌面助手里；MT4 目前支持账户、持仓、挂单采集及浮亏监控。
 
@@ -87,8 +87,8 @@ TradePet 会把完整亏损交易投影为可追溯的价格区域，记录进�
 ### 从源码构建
 
 ```powershell
-git clone https://github.com/cz1978/MT5PET.git
-cd MT5PET
+git clone https://github.com/cz1978/tradepet.git
+cd tradepet
 .\scripts\build-release.ps1
 ```
 

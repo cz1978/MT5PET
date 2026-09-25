@@ -4,7 +4,7 @@
 
 ## 下载并启动
 
-1. 打开 [GitHub 发布页](https://github.com/cz1978/MT5PET/releases/tag/v1.0.0-rc.3)。
+1. 打开 [GitHub 发布页](https://github.com/cz1978/tradepet/releases/tag/v1.0.0-rc.3)。
 2. 在 Assets 中下载 `TradePet-1.0.0-rc.3-win-x64.zip`。`Source code` 是开发用源码，不是可运行安装包。
 3. 将 ZIP **完整解压**到自己的应用目录，例如 `D:\Apps\TradePet-1.0.0-rc.3`。
 4. 运行解压目录内的 `TradePet.exe`，跟随四步设置向导完成配置。不要在压缩包内直接运行，也不要只复制 EXE。
@@ -103,15 +103,15 @@ MT4 当前支持账户、持仓、挂单、浮亏监控。成交历史、完整�
 | MT4 历史和日报为空 | 当前版本不支持，不是连接故障；实时持仓和浮亏仍可使用。 |
 | 升级后仍自动弹快速复盘 | 确认旧进程已退出，快捷方式指向新版目录；仅修改源码或解压文件不会更新正在运行的进程。 |
 
-反馈问题时可在 [GitHub Issues](https://github.com/cz1978/MT5PET/issues) 提供版本号、Windows 版本、终端平台、复现步骤和已脱敏日志片段。不要上传完整数据库、账号信息或原始交易截图。
+反馈问题时可在 [GitHub Issues](https://github.com/cz1978/tradepet/issues) 提供版本号、Windows 版本、终端平台、复现步骤和已脱敏日志片段。不要上传完整数据库、账号信息或原始交易截图。
 
 ## 从源码构建
 
 开发机需要 Git、.NET 8 SDK，以及 MT4/MT5 自带的 MetaEditor 编译器。运行 MT5 采集还需要 64 位 Python 3.13。
 
 ```powershell
-git clone https://github.com/cz1978/MT5PET.git
-cd MT5PET
+git clone https://github.com/cz1978/tradepet.git
+cd tradepet
 .\scripts\build-release.ps1 `
   -Mt5MetaEditorPath 'C:\你的MT5目录\MetaEditor64.exe' `
   -Mt4MetaEditorPath 'C:\你的MT4目录\metaeditor.exe'
