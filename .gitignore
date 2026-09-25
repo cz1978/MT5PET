@@ -6,6 +6,8 @@
 TestResults/
 /artifacts/
 /.venv/
+/.playwright-cli/
+/output/
 __pycache__/
 *.py[cod]
 *.user
@@ -40,5 +42,6 @@ local.settings.json
 
 # Generated MT5 and local visual-verification artifacts
 *.ex5
+*.ex4
 /design-qa.md
 /design-qa-*.png

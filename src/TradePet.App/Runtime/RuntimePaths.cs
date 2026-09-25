@@ -45,7 +45,8 @@ internal sealed record RuntimePaths(
             ? userEnvironmentPython
             : File.Exists(virtualEnvironmentPython) ? virtualEnvironmentPython
             : File.Exists(systemPython) ? systemPython : "python";
-        return new RuntimePaths(python, worker, historyWorker, bridge, source, packagedSetup);
+        var setup = File.Exists(packagedSetup) ? packagedSetup : Path.Combine(repoRoot ?? baseDirectory, "scripts", "setup-python.ps1");
+        return new RuntimePaths(python, worker, historyWorker, bridge, source, setup);
     }
 
     private static string? FindRepoRoot(string startingPath)

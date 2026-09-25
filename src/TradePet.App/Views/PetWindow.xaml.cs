@@ -148,6 +148,7 @@ public partial class PetWindow : Window
         _trayMenu.Items.Add("交易计划", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowPlanPageCommand.Execute(null)));
         _trayMenu.Items.Add("亏损区域", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowLossZonesPageCommand.Execute(null)));
         _trayMenu.Items.Add("复盘分析", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowReviewPageCommand.Execute(null)));
+        _trayMenu.Items.Add("快速复盘", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowQuickReviewCommand.Execute(null)));
         _trayMenu.Items.Add("时间线", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowTimelinePageCommand.Execute(null)));
         _trayMenu.Items.Add("设置", null, (_, _) => Dispatcher.Invoke(() => _viewModel.ShowSettingsPageCommand.Execute(null)));
         _trayMenu.Items.Add(new Forms.ToolStripSeparator());

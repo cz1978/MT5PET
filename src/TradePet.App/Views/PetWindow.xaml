@@ -84,6 +84,7 @@
             <MenuItem Header="交易计划" Command="{Binding ShowPlanPageCommand}" />
             <MenuItem Header="亏损区域" Command="{Binding ShowLossZonesPageCommand}" />
             <MenuItem Header="复盘分析" Command="{Binding ShowReviewPageCommand}" />
+            <MenuItem Header="快速复盘" Command="{Binding ShowQuickReviewCommand}" />
             <MenuItem Header="时间线" Command="{Binding ShowTimelinePageCommand}" />
             <MenuItem Header="设置" Command="{Binding ShowSettingsPageCommand}" />
             <Separator />
@@ -152,9 +153,16 @@
                     <Grid Grid.Row="1" Margin="0,7,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                         <TextBlock Text="今日合计盈亏" Foreground="#96A29E" FontSize="11" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="{Binding TotalPnl, StringFormat={}{0:+0.##;-0.##;0}}"
-                                   Foreground="{Binding TotalPnlColor}"
-                                   FontSize="28" FontWeight="Bold" HorizontalAlignment="Right" />
+                        <TextBlock Grid.Column="1"
+                        Foreground="{Binding TotalPnlColor}"
+                        FontSize="28" FontWeight="Bold" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                    <Binding Path="SupportsTradeHistory"/>
+                                    <Binding Path="TotalPnl"/>
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
                     </Grid>
 
                     <Border Grid.Row="2" Margin="0,5,0,0" Background="#0D141D" CornerRadius="8" Padding="8,6">
@@ -164,7 +172,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <TextBlock Text="已实现" Foreground="#71807B" FontSize="9" />
-                                <TextBlock Text="{Binding RealizedPnl, StringFormat={}{0:+0.##;-0.##;0}}" Foreground="{Binding RealizedPnlColor}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Foreground="{Binding RealizedPnlColor}" FontWeight="SemiBold" FontSize="11">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                            <Binding Path="SupportsTradeHistory"/>
+                                            <Binding Path="RealizedPnl"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="当前浮动" Foreground="#71807B" FontSize="9" />
@@ -172,11 +187,25 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="今日高点" Foreground="#71807B" FontSize="9" />
-                                <TextBlock Text="{Binding HighWaterPnl, StringFormat={}{0:+0.##;-0.##;0}}" Foreground="{Binding HighWaterPnlColor}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Foreground="{Binding HighWaterPnlColor}" FontWeight="SemiBold" FontSize="11">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                            <Binding Path="SupportsTradeHistory"/>
+                                            <Binding Path="HighWaterPnl"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </StackPanel>
                             <StackPanel Grid.Column="3">
                                 <TextBlock Text="盈利回吐" Foreground="#71807B" FontSize="9" />
-                                <TextBlock Text="{Binding Giveback, StringFormat={}{0:0.##}}" Foreground="{Binding GivebackColor}" FontWeight="SemiBold" FontSize="11" />
+                                <TextBlock Foreground="{Binding GivebackColor}" FontWeight="SemiBold" FontSize="11">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                            <Binding Path="SupportsTradeHistory"/>
+                                            <Binding Path="Giveback"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </StackPanel>
                         </Grid>
                     </Border>

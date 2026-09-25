@@ -106,7 +106,9 @@ public sealed class TradePetRuntime : IAsyncDisposable
     private readonly HashSet<long> _evaluatedOpenPositionIds = [];
     private readonly HashSet<long> _missingStopLossAlerted = [];
     private readonly Queue<string> _recentPetAdviceKeys = new();
-    private Mt5WorkerClient? _worker;
+    private ITradingWorkerClient? _worker;
+    private TradingPlatform _activePlatform;
+    private int _setupVersion;
     private Mt5TerminalInstallation? _terminal;
     private AccountSnapshot? _account;
     private string? _loadedScope;
@@ -140,7 +142,8 @@ public sealed class TradePetRuntime : IAsyncDisposable
     private readonly HashSet<string> _dailyReportsShownThisRun = new(StringComparer.Ordinal);
     private readonly HashSet<long> _macroThirtyMinuteReminders = [];
     private readonly HashSet<long> _macroFiveMinuteReminders = [];
-    private readonly ConcurrentDictionary<string, byte> _pendingQuickReviews = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, TradeRecord> _pendingQuickReviews = new(StringComparer.Ordinal);
+    private QuickReviewWindow? _quickReviewWindow;
     private CancellationTokenSource? _reviewQueryCancellation;
     private CancellationTokenSource? _tradeDetailCancellation;
     private Task? _reviewRefreshTask;
@@ -341,16 +344,22 @@ public sealed class TradePetRuntime : IAsyncDisposable
         StartBackgroundTask("交易日报定时器", RunDailyReportScheduleAsync);
         StartBackgroundTask("宏观事件提醒", RunMacroCalendarMonitorAsync);
 
-        var terminals = _terminalDiscovery.Discover();
+        _activePlatform = _viewModel.SelectedPlatform;
+        await OnUiAsync(() => _viewModel.SupportsTradeHistory = _activePlatform != TradingPlatform.Mt4);
+        var selectedTerminalPath = _viewModel.SelectedTerminalPath;
+        var terminals = _terminalDiscovery.Discover(selectedTerminalPath, _activePlatform);
         await OnUiAsync(() =>
         {
             _viewModel.TerminalOptions.Clear();
             for (var index = 0; index < terminals.Count; index++)
             {
-                _viewModel.TerminalOptions.Add(new TerminalOption(terminals[index].TerminalPath, $"交易终端 {index + 1}"));
+                _viewModel.TerminalOptions.Add(new TerminalOption(terminals[index].TerminalPath, terminals[index].Label));
             }
+            if (selectedTerminalPath is not null && !terminals.Any(item => string.Equals(item.TerminalPath, selectedTerminalPath, StringComparison.OrdinalIgnoreCase)))
+                _viewModel.TerminalOptions.Add(new TerminalOption(selectedTerminalPath, "已保存的终端 · 未找到，请重新选择"));
+            _viewModel.SelectedTerminalPath = selectedTerminalPath;
         });
-        _terminal = _terminalDiscovery.FindPreferred(_viewModel.SelectedTerminalPath);
+        _terminal = _terminalDiscovery.FindPreferred(selectedTerminalPath, _activePlatform);
         if (_terminal is null)
         {
             await OnUiAsync(() =>
@@ -363,6 +372,25 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
         await OnUiAsync(() => _viewModel.SelectedTerminalPath = _terminal.TerminalPath);
 
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            if (string.IsNullOrWhiteSpace(_terminal.DataDirectory))
+            {
+                UpdateDiagnostic("请先打开并登录 MT4，再从设置向导安装插件。完成后重启 TradePet。");
+                return;
+            }
+            _worker = new TradePet.Infrastructure.Mt4.Mt4FileClient(_terminal.TerminalPath, _terminal.DataDirectory);
+            StartBackgroundTask("MT4 只读采集", _worker.RunAsync);
+            StartBackgroundTask("MT4 事件消费", ConsumeWorkerEventsAsync);
+            await OnUiAsync(() =>
+            {
+                _viewModel.ConnectionText = "等待 MT4 只读插件";
+                _viewModel.BridgeText = "MT4 插件等待挂图";
+                _viewModel.ReviewSyncText = "MT4 当前仅支持实时监控，未接入成交历史";
+            });
+            return;
+        }
+
         StartBackgroundTask("Bridge 管道", _bridge.RunAsync);
         StartBackgroundTask("Bridge 事件消费", ConsumeBridgeEventsAsync);
         await InstallBridgeAsync();
@@ -374,8 +402,9 @@ public sealed class TradePetRuntime : IAsyncDisposable
             return;
         }
 
-        _worker = new Mt5WorkerClient(new Mt5WorkerOptions(paths.PythonExecutable, paths.WorkerScript, _terminal.TerminalPath));
-        _worker.DiagnosticReceived += message => UpdateWorkerDiagnostic(message, paths.PythonSetupScript);
+        var mt5Worker = new Mt5WorkerClient(new Mt5WorkerOptions(paths.PythonExecutable, paths.WorkerScript, _terminal.TerminalPath));
+        mt5Worker.DiagnosticReceived += message => UpdateWorkerDiagnostic(message, paths.PythonSetupScript);
+        _worker = mt5Worker;
         StartBackgroundTask("MT5 采集进程", _worker.RunAsync);
         StartBackgroundTask("MT5 事件消费", ConsumeWorkerEventsAsync);
         await OnUiAsync(() =>
@@ -504,6 +533,11 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
     public async Task TogglePlanRecordingAsync()
     {
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            await ShowSpeechAsync("MT4 暂不支持图表计划。", "当前可使用实时持仓与浮亏监控。", TimeSpan.FromSeconds(6));
+            return;
+        }
         await using var operationLease = await EnterRuntimeOperationAsync(
             MaintenanceOperationKind.Read, _cancellation.Token);
         await _stateGate.WaitAsync(_cancellation.Token);
@@ -537,6 +571,11 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
     public async Task ImportCurrentChartAsync()
     {
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            await ShowSpeechAsync("MT4 暂不支持图表导入。", "当前可使用实时持仓与浮亏监控。", TimeSpan.FromSeconds(6));
+            return;
+        }
         await using var operationLease = await EnterRuntimeOperationAsync(
             MaintenanceOperationKind.Write, _cancellation.Token);
         await _stateGate.WaitAsync(_cancellation.Token);
@@ -588,22 +627,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
             GivebackValue = _viewModel.GivebackValue,
         };
         _floatingLossPolicy = _viewModel.GetFloatingLossPolicy();
-        var desktop = new DesktopSettings(
-            _viewModel.IsFocusMode,
-            _viewModel.IsTopmost,
-            _viewModel.IsPositionLocked,
-            _viewModel.IsMouseThrough,
-            _viewModel.PetOpacity,
-            _viewModel.PetScale,
-            _viewModel.LossZoneTolerance,
-            _viewModel.SelectedTerminalPath,
-            1,
-            _viewModel.ExpandCardOnHover,
-            _viewModel.MiniPositionVisible,
-            _viewModel.MiniPositionPinned,
-            1,
-            _viewModel.DailyReportEnabled,
-            _viewModel.DailyReportTimeText);
+        var desktop = CaptureDesktopSettings(_setupVersion);
         var settingsPersisted = await TryPersistLiveAsync(
             () => _database.SaveSettingAsync(GlobalScope, DesktopSettingKey, desktop, _cancellation.Token),
             "保存桌宠设置");
@@ -627,10 +651,10 @@ public sealed class TradePetRuntime : IAsyncDisposable
             settingsPersisted &= floatingPolicyPersistedToDatabase;
         }
 
-        if (_terminal is not null &&
+        if (_terminal is null || _activePlatform != _viewModel.SelectedPlatform ||
             !string.Equals(_terminal.TerminalPath, _viewModel.SelectedTerminalPath, StringComparison.OrdinalIgnoreCase))
         {
-            UpdateDiagnostic("交易终端选择已保存，重启天禄后生效。");
+            UpdateDiagnostic("交易平台和终端选择已保存，重启天禄后生效。");
         }
 
         var saveHeadline = settingsPersisted
@@ -650,8 +674,47 @@ public sealed class TradePetRuntime : IAsyncDisposable
         }
     }
 
+    public async Task<bool> CompleteSetupAsync()
+    {
+        var saved = false;
+        await WithStateGateAsync(async () =>
+        {
+            StartupRegistration.SetEnabled(_viewModel.StartWithWindows);
+            saved = await TryPersistLiveAsync(
+                () => _database.SaveSettingAsync(GlobalScope, DesktopSettingKey, CaptureDesktopSettings(1), _cancellation.Token),
+                "保存首次设置");
+            if (saved) { _setupVersion = 1; _viewModel.NeedsSetup = false; }
+        });
+        return saved;
+    }
+
+    private DesktopSettings CaptureDesktopSettings(int setupVersion) => new(
+            _viewModel.IsFocusMode,
+            _viewModel.IsTopmost,
+            _viewModel.IsPositionLocked,
+            _viewModel.IsMouseThrough,
+            _viewModel.PetOpacity,
+            _viewModel.PetScale,
+            _viewModel.LossZoneTolerance,
+            _viewModel.SelectedTerminalPath,
+            1,
+            _viewModel.ExpandCardOnHover,
+            _viewModel.MiniPositionVisible,
+            _viewModel.MiniPositionPinned,
+            1,
+            _viewModel.DailyReportEnabled,
+            _viewModel.DailyReportTimeText,
+            _viewModel.SelectedPlatform,
+            setupVersion);
+
+
     public async Task InstallBridgeAsync()
     {
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            _viewModel.ShowSetup?.Invoke();
+            return;
+        }
         if (_terminal is null)
         {
             UpdateDiagnostic("没有可安装桥接插件的交易终端。");
@@ -1011,7 +1074,8 @@ public sealed class TradePetRuntime : IAsyncDisposable
             _petState = _petBehavior.ApplySignal(_petState, PetSignal.Disconnected, _timeProvider.GetUtcNow());
             await OnUiAsync(() =>
             {
-                _viewModel.ConnectionText = waitingForTerminal ? "等待手动启动 MT5" : "交易终端已断开";
+                _viewModel.ConnectionText = waitingForTerminal ? "等待手动启动交易终端" : "交易终端已断开";
+                if (_activePlatform == TradingPlatform.Mt4) _viewModel.BridgeText = "MT4 插件未连接或数据已过期";
                 _viewModel.PositionDataStale = true;
                 _viewModel.RiskText = _viewModel.ConnectionText;
                 _viewModel.PetActivity = _petState.Current.Activity;
@@ -1097,8 +1161,13 @@ public sealed class TradePetRuntime : IAsyncDisposable
             {
                 _viewModel.ConnectionText = "交易终端已连接 · 当前仅监控持仓";
                 _viewModel.DiagnosticText =
-                    "完整交易复盘目前只支持 MT5 对冲账户；当前账户继续提供持仓和账户浮亏监控。";
-                _viewModel.ClearReview("当前账户不是对冲模式，完整交易复盘已停用，避免生成错误统计。");
+                    _activePlatform == TradingPlatform.Mt4
+                        ? "MT4 已接入账户、持仓、挂单与浮亏监控；成交历史、完整复盘、日历和日报暂不支持。"
+                        : "完整交易复盘目前只支持 MT5 对冲账户；当前账户继续提供持仓和账户浮亏监控。";
+                _viewModel.ClearReview(_activePlatform == TradingPlatform.Mt4
+                    ? "MT4 成交历史尚未接入，不生成完整交易统计。"
+                    : "当前账户不是对冲模式，完整交易复盘已停用，避免生成错误统计。");
+                if (_activePlatform == TradingPlatform.Mt4) _viewModel.BridgeText = "MT4 只读插件已连接";
             });
         }
 
@@ -1119,9 +1188,10 @@ public sealed class TradePetRuntime : IAsyncDisposable
         }
         if ((accountChanged || clockUpdate?.ContextChanged == true) && batch.ServerUtcOffsetSeconds is not null)
         {
-            await PersistServerTimeSegmentAsync(ReviewTimeBasis.EstimatedBrokerServer, "mt5-python-worker-v1");
+            await PersistServerTimeSegmentAsync(ReviewTimeBasis.EstimatedBrokerServer,
+                _activePlatform == TradingPlatform.Mt4 ? "mt4-ea-snapshot-v1" : "mt5-python-worker-v1");
         }
-        if (_serverDateAuthoritative)
+        if (_serverDateAuthoritative || _activePlatform == TradingPlatform.Mt4)
         {
             await EnsureScopeLoadedForLiveAsync();
             await EnsureReviewHistorySyncAsync();
@@ -1153,7 +1223,22 @@ public sealed class TradePetRuntime : IAsyncDisposable
             }
         }
 
-        _workerSession.MarkSnapshotReceived();
+        _workerSession.MarkSnapshotReceived(requiresDealHistory: _activePlatform != TradingPlatform.Mt4);
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            await OnUiAsync(() =>
+            {
+                _viewModel.FloatingPnl = batch.Account.FloatingPnl;
+                _viewModel.RiskText = "MT4 · 实时持仓监控";
+                _viewModel.ReviewSyncText = "MT4 · 成交历史暂未接入";
+                _viewModel.ServerDateText = batch.ServerUtcOffsetSeconds is null ? "等待 MT4 报价校时" : _serverDate.ToString("yyyy-MM-dd");
+            });
+            await EvaluateFloatingLossAlertsAsync(batch.Account, suppressFloatingLossNotification);
+            if (batch.ServerUtcOffsetSeconds is not null)
+                await EvaluateMissingStopLossRemindersAsync(batch.Account.CapturedAtUtc);
+            _suppressNextFloatingLossNotification = false;
+            return;
+        }
         if (_serverDateAuthoritative)
         {
             await RecalculateDailyAsync(isRecovery: !_hasInitialDeals);
@@ -1277,7 +1362,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
             else
             {
                 await RegisterClosedTradeZoneAsync(trade, showFeedback: true);
-                await OfferQuickReviewAsync(trade);
+                QueueQuickReview(trade);
             }
         }
 
@@ -1532,34 +1617,58 @@ public sealed class TradePetRuntime : IAsyncDisposable
             trade.EntryPrice);
     }
 
-    private async Task OfferQuickReviewAsync(TradeRecord trade)
+    private void QueueQuickReview(TradeRecord trade)
     {
-        if (!_persistenceAvailable || _account is null) return;
-        var key = new TradeKey(trade.AccountKey, trade.PositionId);
-        var pendingKey = $"{trade.AccountKey}|{trade.PositionId}";
-        if (!_pendingQuickReviews.TryAdd(pendingKey, 0)) return;
-        try
+        if (!_persistenceAvailable) return;
+        // Closing trades and snooze timers must never open or activate a window.
+        _pendingQuickReviews.TryAdd($"{trade.AccountKey}|{trade.PositionId}", trade);
+    }
+
+    public async Task ShowQuickReviewAsync()
+    {
+        if (_quickReviewWindow is not null)
         {
-            var detail = await _reviewRepository.LoadTradeDetailAsync(key, _cancellation.Token);
-            if (detail is null || detail.Document is not null) { _pendingQuickReviews.TryRemove(pendingKey, out _); return; }
+            if (_quickReviewWindow.WindowState == WindowState.Minimized)
+                _quickReviewWindow.WindowState = WindowState.Normal;
+            _quickReviewWindow.Activate();
+            return;
+        }
+        if (!_persistenceAvailable || _account is null) return;
+        var accountKey = _account.Scope.AccountKey;
+        foreach (var pending in _pendingQuickReviews
+                     .Where(item => item.Value.AccountKey == accountKey)
+                     .OrderBy(item => item.Value.ClosedAtUtc))
+        {
+            var trade = pending.Value;
+            var pendingKey = pending.Key;
+            var detail = await _reviewRepository.LoadTradeDetailAsync(
+                new TradeKey(trade.AccountKey, trade.PositionId), _cancellation.Token);
+            if (detail is null || detail.Document is not null)
+            {
+                _pendingQuickReviews.TryRemove(pendingKey, out _);
+                continue;
+            }
             await OnUiAsync(() =>
             {
+                if (_account?.Scope.AccountKey != accountKey || _cancellation.IsCancellationRequested) return;
                 var window = new QuickReviewWindow(detail);
+                _quickReviewWindow = window;
                 window.Completed += response =>
                 {
                     _pendingQuickReviews.TryRemove(pendingKey, out _);
                     if (response.SaveRequested) _ = SaveQuickReviewAsync(trade, detail.Version, response);
                     else if (response.RemindLater) _ = RemindQuickReviewLaterAsync(trade);
                 };
-                window.Closed += (_, _) => _pendingQuickReviews.TryRemove(pendingKey, out _);
+                window.Closed += (_, _) =>
+                {
+                    _quickReviewWindow = null;
+                    _pendingQuickReviews.TryRemove(pendingKey, out _);
+                };
                 window.Show();
             });
+            return;
         }
-        catch
-        {
-            _pendingQuickReviews.TryRemove(pendingKey, out _);
-            throw;
-        }
+        await OnUiAsync(() => _viewModel.ShowConsolePage?.Invoke(3));
     }
 
     private async Task SaveQuickReviewAsync(TradeRecord trade, ReviewDataVersion version, QuickReviewWindow dialog)
@@ -1567,7 +1676,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
         var planText = $"是否按计划：{dialog.PlanCompliance}";
         var command = new SaveTradeReviewCommand(new TradeKey(trade.AccountKey, trade.PositionId), string.Empty,
             dialog.ExitReason, dialog.PlanCompliance == "是" ? planText : string.Empty,
-            dialog.Improvement, dialog.Improvement, planText, string.Empty, string.Empty,
+            dialog.Improvement, dialog.Improvement, $"{planText}{Environment.NewLine}{dialog.AnalysisSummary}", string.Empty, string.Empty,
             version.SourceVersion.ToString(CultureInfo.InvariantCulture), version.RuleVersion, ReviewCompletionStatus.Draft);
         var result = await _journalService.SaveTradeReviewAsync(command, 0, _cancellation.Token);
         if (!result.IsSaved) await ShowSpeechAsync("快速复盘未保存", result.Message, TimeSpan.FromSeconds(7));
@@ -1578,13 +1687,14 @@ public sealed class TradePetRuntime : IAsyncDisposable
         try
         {
             await _scheduler.DelayAsync(TimeSpan.FromMinutes(10), _cancellation.Token);
-            await OfferQuickReviewAsync(trade);
+            QueueQuickReview(trade);
         }
         catch (OperationCanceledException) { }
     }
 
     private async Task RecalculateDailyAsync(bool isRecovery)
     {
+        if (_activePlatform == TradingPlatform.Mt4) return;
         if (_account is null)
         {
             return;
@@ -1999,6 +2109,12 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
     public void ShowMacroCalendar()
     {
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            _viewModel.DiagnosticText = "MT4 暂不提供经济日历。";
+            _viewModel.ShowMainWindow?.Invoke();
+            return;
+        }
         if (_macroCalendarWindow is { IsVisible: true })
         {
             _macroCalendarWindow.Activate();
@@ -4768,6 +4884,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
     private async Task EnsureReviewHistorySyncAsync()
     {
+        if (_activePlatform == TradingPlatform.Mt4) return;
         if (_worker is null || !_workerConnected || !_serverDateAuthoritative || _account is null)
         {
             return;
@@ -4943,7 +5060,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
             _viewModel.Positions.Clear();
             foreach (var position in positions.OrderBy(item => item.OpenedAtUtc))
             {
-                _viewModel.Positions.Add(new PositionRowViewModel(position));
+                _viewModel.Positions.Add(new PositionRowViewModel(position, showDuration: _activePlatform != TradingPlatform.Mt4));
             }
             _viewModel.HasPositions = positions.Count > 0;
             _viewModel.OpenPositionCount = positions.Count;
@@ -5402,7 +5519,7 @@ public sealed class TradePetRuntime : IAsyncDisposable
         while (!cancellationToken.IsCancellationRequested)
         {
             await _scheduler.DelayAsync(TimeSpan.FromSeconds(30), cancellationToken);
-            if (!_viewModel.DailyReportEnabled || !_serverDateAuthoritative || _account is null ||
+            if (_activePlatform == TradingPlatform.Mt4 || !_viewModel.DailyReportEnabled || !_serverDateAuthoritative || _account is null ||
                 !TryParseDailyReportTime(_viewModel.DailyReportTimeText, out var reportTime))
             {
                 continue;
@@ -5479,6 +5596,11 @@ public sealed class TradePetRuntime : IAsyncDisposable
 
     private async Task ShowDailyTradingReportAsync(DateOnly date, bool automatic)
     {
+        if (_activePlatform == TradingPlatform.Mt4)
+        {
+            if (!automatic) await ShowSpeechAsync("MT4 日报暂不可用。", "成交历史尚未接入，当前提供实时持仓与浮亏监控。", TimeSpan.FromSeconds(7));
+            return;
+        }
         if (_account is null || !_serverDateAuthoritative)
         {
             await ShowSpeechAsync("日报还不能生成。", "等待 MT5 账户和服务器时间连接完成。", TimeSpan.FromSeconds(7));
@@ -6199,6 +6321,9 @@ public sealed class TradePetRuntime : IAsyncDisposable
         await OnUiAsync(() =>
         {
             _viewModel.IsFocusMode = settings.FocusMode;
+            _setupVersion = settings.SetupVersion;
+            _viewModel.NeedsSetup = settings.SetupVersion < 1;
+            _viewModel.SelectedPlatform = settings.Platform;
             _viewModel.IsTopmost = settings.Topmost;
             _viewModel.IsPositionLocked = settings.PositionLocked;
             _viewModel.IsMouseThrough = settings.MouseThrough;
@@ -6538,7 +6663,9 @@ public sealed class TradePetRuntime : IAsyncDisposable
         bool MiniPositionPinned = false,
         int InteractionVersion = 0,
         bool DailyReportEnabled = true,
-        string DailyReportTime = "23:55");
+        string DailyReportTime = "23:55",
+        TradingPlatform Platform = TradingPlatform.Mt5,
+        int SetupVersion = 0);
 
     private sealed record BehaviorReviewEditCommand(
         string AccountKey,

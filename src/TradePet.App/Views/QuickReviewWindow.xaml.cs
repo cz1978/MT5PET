@@ -19,9 +19,10 @@ public partial class QuickReviewWindow : Window
             PlanComplianceStatus.OutsidePlan or PlanComplianceStatus.ManualOutside => 1,
             _ => 2,
         };
-        var analysis = AnalyzeExitReason(detail);
-        ExitReasonBox.Text = analysis.Reason;
+        var analysis = QuickReviewAnalyzer.Analyze(detail);
+        ExitReasonBox.Text = analysis.ExitReason;
         AnalysisText.Text = analysis.Explanation;
+        ImproveBox.Text = analysis.Improvement;
     }
 
     public bool SaveRequested { get; private set; }
@@ -30,6 +31,7 @@ public partial class QuickReviewWindow : Window
     public string PlanCompliance => (PlanBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "不确定";
     public string ExitReason => ExitReasonBox.Text.Trim();
     public string Improvement => ImproveBox.Text.Trim();
+    public string AnalysisSummary => AnalysisText.Text;
 
     private void ReasonPreset_Click(object sender, RoutedEventArgs e)
     {
@@ -39,54 +41,6 @@ public partial class QuickReviewWindow : Window
         ExitReasonBox.Focus();
     }
 
-    private static ExitReasonAnalysis AnalyzeExitReason(TradeDetailData detail)
-    {
-        var trade = detail.Trade;
-        var exitPrice = detail.Deals
-            .Where(deal => deal.EntryKind is DealEntryKind.Out or DealEntryKind.InOut or DealEntryKind.OutBy)
-            .OrderByDescending(deal => deal.OccurredAtUtc)
-            .ThenByDescending(deal => deal.Ticket)
-            .Select(deal => (decimal?)deal.Price)
-            .FirstOrDefault() ?? trade.ExitPrice;
-
-        if (exitPrice is not null && detail.Plan is { } plan)
-        {
-            var validTarget = plan.TargetPrice is { } target && trade.Side switch
-            {
-                TradeSide.Buy => target > trade.EntryPrice && exitPrice.Value >= target,
-                TradeSide.Sell => target < trade.EntryPrice && exitPrice.Value <= target,
-                _ => false,
-            };
-            if (validTarget)
-            {
-                return new ExitReasonAnalysis("止盈离场", $"自动判断：最终平仓价 {exitPrice:0.#####} 已达到计划目标 {plan.TargetPrice:0.#####}。", true);
-            }
-
-            var validStop = plan.StopPrice is { } stop && trade.Side switch
-            {
-                TradeSide.Buy => stop < trade.EntryPrice && exitPrice.Value <= stop,
-                TradeSide.Sell => stop > trade.EntryPrice && exitPrice.Value >= stop,
-                _ => false,
-            };
-            if (validStop)
-            {
-                return new ExitReasonAnalysis("止损离场", $"自动判断：最终平仓价 {exitPrice:0.#####} 已触及计划止损 {plan.StopPrice:0.#####}。", true);
-            }
-        }
-
-        var reason = trade.NetPnl switch
-        {
-            > 0.01m => "盈利离场（待确认）",
-            < -0.01m => "亏损离场（待确认）",
-            _ => "保本离场（待确认）",
-        };
-        var explanation = detail.Plan is null
-            ? "自动建议：没有绑定止损/目标计划，只能按盈亏判断；可直接保存或从下拉框纠正。"
-            : "自动建议：平仓价未触及计划止损或目标，只能按盈亏判断；可从下拉框纠正。";
-        return new ExitReasonAnalysis(reason, explanation, false);
-    }
-
-    private sealed record ExitReasonAnalysis(string Reason, string Explanation, bool IsExact);
     private void Save_Click(object sender, RoutedEventArgs e) { SaveRequested = true; Finish(); }
     private void Later_Click(object sender, RoutedEventArgs e) { RemindLater = true; Finish(); }
     private void Skip_Click(object sender, RoutedEventArgs e) => Finish();

@@ -88,11 +88,14 @@ public sealed class WorkerSession
         }
     }
 
-    public void MarkSnapshotReceived()
+    public void MarkSnapshotReceived(bool requiresDealHistory = true)
     {
         lock (_sync)
         {
-            _state = Advance(_state with { HasInitialSnapshot = true });
+            var next = _state with { HasInitialSnapshot = true };
+            _state = !requiresDealHistory && next.IsConnected
+                ? next with { Phase = WorkerSessionPhase.Live }
+                : Advance(next);
         }
     }
 

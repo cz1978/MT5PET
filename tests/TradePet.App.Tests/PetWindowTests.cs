@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using TradePet.App.Controls;
 using TradePet.App.ViewModels;
 using TradePet.App.Views;
+using TradePet.Application.Review;
 using TradePet.Core.Domain;
 using Xunit;
 
@@ -106,6 +107,17 @@ public sealed class PetWindowTests
                 window.ContextMenu.PlacementTarget = window;
                 window.ContextMenu.IsOpen = true;
                 window.ContextMenu.UpdateLayout();
+                var quickReviewItem = Assert.Single(window.ContextMenu.Items.OfType<MenuItem>(),
+                    item => Equals(item.Header, "快速复盘"));
+                Assert.Same(viewModel.ShowQuickReviewCommand, quickReviewItem.Command);
+                var quickReviewCount = 0;
+                viewModel.ShowQuickReviewAsync = () =>
+                {
+                    quickReviewCount++;
+                    return Task.CompletedTask;
+                };
+                quickReviewItem.Command.Execute(null);
+                Assert.Equal(1, quickReviewCount);
                 var exitItem = Assert.Single(window.ContextMenu.Items.OfType<MenuItem>(),
                     item => Equals(item.Header, "退出天禄交易助手"));
                 Assert.Same(viewModel.ExitCommand, exitItem.Command);
@@ -126,6 +138,8 @@ public sealed class PetWindowTests
                 sprite.SetAnimationPaused(false);
                 Assert.False(timer.IsEnabled);
                 Assert.False(bubble.IsOpen);
+                VerifySetupFlow();
+                VerifyQuickReview();
             }
             catch (Exception exception)
             {
@@ -142,6 +156,62 @@ public sealed class PetWindowTests
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         await completion.Task.WaitAsync(TimeSpan.FromSeconds(30));
+    }
+
+    private static void VerifyQuickReview()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var trade = new TradeRecord("Broker|1", 1, "TEST", TradeSide.Buy, now.AddMinutes(-10), now,
+            new(2026, 9, 24), new(2026, 9, 24), 100, 99, 1, 1, 0, -5, true);
+        var detail = new TradeDetailData(trade, [], null, null, null,
+            [new PositionPnlSample(new TradeKey("Broker|1", 1), now.AddSeconds(-1), 0, 20, 20, 1,
+                null, null, 1_000, "position-pnl-v1")], null, null, [], [], [], null,
+            new ReviewDataVersion("Broker|1", 1, 1, 1, "rule-1", "time-1", now));
+        var review = new QuickReviewWindow(detail);
+        try
+        {
+            Assert.False(review.Topmost);
+            Assert.False(review.ShowActivated);
+            review.Show();
+            review.UpdateLayout();
+            Assert.Contains("浮盈回吐", review.ExitReason);
+            Assert.Contains("回吐 25", review.AnalysisSummary);
+            Assert.False(string.IsNullOrWhiteSpace(review.Improvement));
+            ((TextBox)review.FindName("ExitReasonBox")).Text = "主动退出";
+            ((TextBox)review.FindName("ImproveBox")).Text = "我的修正";
+            Assert.Equal("主动退出", review.ExitReason);
+            Assert.Equal("我的修正", review.Improvement);
+            Assert.Contains("回吐 25", review.AnalysisSummary);
+        }
+        finally { review.Close(); }
+    }
+
+    private static void VerifySetupFlow()
+    {
+        var viewModel = new MainViewModel { SelectedTerminalPath = @"C:\TradePet-test-missing\terminal64.exe" };
+        var saved = false;
+        var setup = new SetupWindow(viewModel, () => Task.FromResult(saved)) { ShowActivated = false };
+        try
+        {
+            setup.Show();
+            setup.UpdateLayout();
+            Assert.Equal(@"C:\TradePet-test-missing\terminal64.exe", viewModel.SelectedTerminalPath);
+            var platform = (ComboBox)setup.FindName("PlatformPicker");
+            platform.SelectedValue = TradePet.Infrastructure.Mt5.TradingPlatform.Mt4;
+            Assert.Equal(TradePet.Infrastructure.Mt5.TradingPlatform.Mt4, viewModel.SelectedPlatform);
+            Assert.Equal(Visibility.Collapsed, ((StackPanel)setup.FindName("PythonPanel")).Visibility);
+            var next = (Button)setup.FindName("NextButton");
+            for (var i = 0; i < 3; i++) next.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.Equal(Visibility.Visible, ((StackPanel)setup.FindName("PreferencesStep")).Visibility);
+            next.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.True(next.IsEnabled);
+            Assert.Contains("未能保存", ((TextBlock)setup.FindName("Status")).Text);
+            saved = true;
+            next.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+            Assert.False(next.IsEnabled);
+            Assert.Contains("已保存", ((TextBlock)setup.FindName("Status")).Text);
+        }
+        finally { setup.Close(); }
     }
 
     private static void Invoke(PetWindow window, string method, params object[] arguments) =>

@@ -10,7 +10,7 @@ public sealed record Mt5WorkerOptions(
     string WorkerScriptPath,
     string TerminalPath);
 
-public sealed class Mt5WorkerClient : IAsyncDisposable
+public sealed class Mt5WorkerClient : ITradingWorkerClient
 {
     private static readonly TimeSpan MessageTimeout = TimeSpan.FromSeconds(8);
     private static readonly TimeSpan WatchdogInterval = TimeSpan.FromSeconds(2);

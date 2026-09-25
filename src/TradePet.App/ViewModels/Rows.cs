@@ -18,7 +18,7 @@ public static class FinancialPalette
         value > 0.01m ? ProfitBackground : value < -0.01m ? LossBackground : NeutralBackground;
 }
 
-public sealed class PositionRowViewModel(PositionSnapshot position)
+public sealed class PositionRowViewModel(PositionSnapshot position, bool showDuration = true)
 {
     public long Ticket { get; } = position.Ticket;
     public string Symbol { get; } = position.Symbol;
@@ -27,7 +27,7 @@ public sealed class PositionRowViewModel(PositionSnapshot position)
     public string EntryPrice { get; } = position.EntryPrice.ToString("0.#####");
     public string Profit { get; } = $"{(position.Profit >= 0m ? "+" : string.Empty)}{position.Profit:0.##}";
     public string ProfitColor { get; } = FinancialPalette.For(position.Profit);
-    public string Duration { get; } = FormatDuration(DateTimeOffset.UtcNow - position.OpenedAtUtc);
+    public string Duration { get; } = showDuration ? FormatDuration(DateTimeOffset.UtcNow - position.OpenedAtUtc) : "—";
     public string StopLossStatus { get; } = position.StopLoss > 0m ? $"止损 {position.StopLoss:0.#####}" : "未设止损";
 
     private static string FormatDuration(TimeSpan duration) => duration.TotalHours >= 1
@@ -38,6 +38,7 @@ public sealed class PositionRowViewModel(PositionSnapshot position)
 public sealed record PlanCategoryOption(PlanCategory Value, string Label);
 
 public sealed record TerminalOption(string Path, string Label);
+public sealed record PlatformOption(TradePet.Infrastructure.Mt5.TradingPlatform Value, string Label);
 
 public sealed class PlanItemRowViewModel : ObservableObject
 {

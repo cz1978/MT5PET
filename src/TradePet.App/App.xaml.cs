@@ -13,6 +13,7 @@ public partial class App : System.Windows.Application
     private TradePetRuntime? _runtime;
     private PetWindow? _petWindow;
     private MainWindow? _mainWindow;
+    private SetupWindow? _setupWindow;
     private MiniPositionWindow? _miniPositionWindow;
     private Mutex? _singleInstanceMutex;
     private bool _ownsSingleInstanceMutex;
@@ -69,6 +70,13 @@ public partial class App : System.Windows.Application
         viewModel.HidePet = () => _petWindow.Hide();
         viewModel.ExitApplicationAsync = ShutdownAsync;
         _runtime = new TradePetRuntime(viewModel, dependencies);
+        viewModel.ShowSetup = () =>
+        {
+            if (_setupWindow is not null) { _setupWindow.Activate(); return; }
+            _setupWindow = new SetupWindow(viewModel, _runtime.CompleteSetupAsync);
+            _setupWindow.Closed += (_, _) => _setupWindow = null;
+            _setupWindow.Show();
+        };
         viewModel.TogglePlanRecordingAsync = _runtime.TogglePlanRecordingAsync;
         viewModel.ImportPlanAsync = _runtime.ImportCurrentChartAsync;
         viewModel.SaveSettingsAsync = _runtime.SaveSettingsAsync;
@@ -78,6 +86,7 @@ public partial class App : System.Windows.Application
         viewModel.ApplyBehaviorPresetAsync = _runtime.ApplyBehaviorPresetAsync;
         viewModel.SaveBehaviorSettingsAsync = _runtime.SaveBehaviorSettingsAsync;
         viewModel.RefreshReviewAsync = _runtime.RefreshReviewAsync;
+        viewModel.ShowQuickReviewAsync = _runtime.ShowQuickReviewAsync;
         viewModel.ShowDailyTradingReportAsync = _runtime.ShowDailyTradingReportAsync;
         viewModel.ShowMacroCalendar = _runtime.ShowMacroCalendar;
 
@@ -88,6 +97,7 @@ public partial class App : System.Windows.Application
         _mainWindow.Show();
 #endif
         await _runtime.StartAsync();
+        if (viewModel.NeedsSetup) viewModel.ShowSetup();
     }
 
     private void ToggleGlobalVisibility()

@@ -3,6 +3,7 @@ using System.Windows.Input;
 using TradePet.Application.Runtime;
 using TradePet.App.ViewModels.Review;
 using TradePet.Core.Domain;
+using TradePet.Infrastructure.Mt5;
 
 namespace TradePet.App.ViewModels;
 
@@ -66,6 +67,18 @@ public sealed class MainViewModel : ObservableObject
     private bool _canMuteCurrentAlert;
     private string _diagnosticText = "天禄正在启动";
     private string? _selectedTerminalPath;
+    private TradingPlatform _selectedPlatform;
+    private bool _supportsTradeHistory = true;
+    public bool SupportsTradeHistory { get => _supportsTradeHistory; set { if (SetProperty(ref _supportsTradeHistory, value)) RaisePropertyChanged(nameof(MonitoringOnly)); } }
+    public bool MonitoringOnly => !SupportsTradeHistory;
+    public bool NeedsSetup { get; set; } = true;
+    public IReadOnlyList<PlatformOption> PlatformOptions { get; } =
+        [new(TradingPlatform.Mt5, "MetaTrader 5 (MT5)"), new(TradingPlatform.Mt4, "MetaTrader 4 (MT4)")];
+    public TradingPlatform SelectedPlatform
+    {
+        get => _selectedPlatform;
+        set { if (SetProperty(ref _selectedPlatform, value)) SelectedTerminalPath = null; }
+    }
     private string _riskText = "等待交易终端";
     private string _reviewSyncText = "历史数据待同步";
     private string _behaviorRiskText = "观察中";
@@ -111,10 +124,12 @@ public sealed class MainViewModel : ObservableObject
         ShowPlanPageCommand = new RelayCommand(() => ShowConsolePage?.Invoke(1));
         ShowLossZonesPageCommand = new RelayCommand(() => ShowConsolePage?.Invoke(2));
         ShowReviewPageCommand = new RelayCommand(() => ShowConsolePage?.Invoke(3));
+        ShowQuickReviewCommand = AsyncCommand(() => ShowQuickReviewAsync?.Invoke() ?? Task.CompletedTask);
         ShowDailyTradingReportCommand = AsyncCommand(() => ShowDailyTradingReportAsync?.Invoke() ?? Task.CompletedTask);
         ShowMacroCalendarCommand = new RelayCommand(() => ShowMacroCalendar?.Invoke());
         ShowTimelinePageCommand = new RelayCommand(() => ShowConsolePage?.Invoke(4));
         ShowSettingsPageCommand = new RelayCommand(() => ShowConsolePage?.Invoke(5));
+        ShowSetupCommand = new RelayCommand(() => ShowSetup?.Invoke());
         HidePetCommand = new RelayCommand(() => HidePet?.Invoke());
         ExitCommand = AsyncCommand(() => ExitApplicationAsync?.Invoke() ?? Task.CompletedTask);
     }
@@ -129,8 +144,11 @@ public sealed class MainViewModel : ObservableObject
     public Func<Task>? SaveBehaviorSettingsAsync { get; set; }
     public Func<Task>? RefreshReviewAsync { get; set; }
     public Func<Task>? ShowDailyTradingReportAsync { get; set; }
+    public Func<Task>? ShowQuickReviewAsync { get; set; }
     public Action? ShowMacroCalendar { get; set; }
     public Action? ShowMainWindow { get; set; }
+    public Action? ShowSetup { get; set; }
+    public ICommand ShowSetupCommand { get; }
     public Action<int>? ShowConsolePage { get; set; }
     public Action? HidePet { get; set; }
     public Func<Task>? ExitApplicationAsync { get; set; }
@@ -149,6 +167,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ShowPlanPageCommand { get; }
     public ICommand ShowLossZonesPageCommand { get; }
     public ICommand ShowReviewPageCommand { get; }
+    public ICommand ShowQuickReviewCommand { get; }
     public ICommand ShowDailyTradingReportCommand { get; }
     public ICommand ShowMacroCalendarCommand { get; }
     public ICommand ShowTimelinePageCommand { get; }

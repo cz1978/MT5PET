@@ -19,10 +19,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\README.md" Link="README.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\INSTALL.md" Link="INSTALL.md" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\CHANGELOG.md" Link="CHANGELOG.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\baoer-pet\pet.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\baoer-pet\spritesheet.webp" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Runtime\TradePetBridge.ex5" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\mt5\TradePetBridge.mq5" Link="Runtime\TradePetBridge.mq5" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\mt4\TradePetBridge.mq4" Link="Runtime\mt4\TradePetBridge.mq4" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\mt4\TradePetBridge.ex4" Link="Runtime\mt4\TradePetBridge.ex4" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\mt4\TradePetBridge.ex4')" />
     <Content Include="..\..\python\tradepet_mt5_worker.py" Link="Runtime\python\tradepet_mt5_worker.py" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\python\tradepet_mt5_connection.py" Link="Runtime\python\tradepet_mt5_connection.py" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\python\tradepet_mt5_history_worker.py" Link="Runtime\python\tradepet_mt5_history_worker.py" CopyToOutputDirectory="PreserveNewest" />

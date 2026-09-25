@@ -266,20 +266,37 @@
                 <TabItem Header="今日概览">
                     <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel>
+                            <TextBlock Text="MT4 实时监控 · 持仓与浮亏可用；成交历史尚未接入，今日合计、已实现盈亏与交易统计显示为 —。"
+                                       TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}" Margin="0,0,0,12"
+                                       Visibility="{Binding MonitoringOnly, Converter={StaticResource BoolToVisibility}}" />
                             <UniformGrid Columns="4" Margin="0,0,0,12">
                                 <Border Style="{StaticResource MetricCardStyle}" Background="{Binding TotalPnlBackground}">
                                     <StackPanel>
                                         <TextBlock Text="今日合计" Style="{StaticResource MutedTextStyle}" />
-                                        <TextBlock Text="{Binding TotalPnl, StringFormat={}{0:+0.##;-0.##;0}}"
-                                                   Foreground="{Binding TotalPnlColor}" FontSize="25" FontWeight="SemiBold" Margin="0,8,0,0" />
+                                        <TextBlock
+                                        Foreground="{Binding TotalPnlColor}" FontSize="25" FontWeight="SemiBold" Margin="0,8,0,0">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                                    <Binding Path="SupportsTradeHistory"/>
+                                                    <Binding Path="TotalPnl"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                         <TextBlock Text="含浮动盈亏" Foreground="#608E81" FontSize="10" Margin="0,7,0,0" />
                                     </StackPanel>
                                 </Border>
                                 <Border Style="{StaticResource MetricCardStyle}">
                                     <StackPanel>
                                         <TextBlock Text="已实现盈亏" Style="{StaticResource MutedTextStyle}" />
-                                        <TextBlock Text="{Binding RealizedPnl, StringFormat={}{0:+0.##;-0.##;0}}"
-                                                   Foreground="{Binding RealizedPnlColor}" FontSize="25" FontWeight="SemiBold" Margin="0,8,0,0" />
+                                        <TextBlock
+                                        Foreground="{Binding RealizedPnlColor}" FontSize="25" FontWeight="SemiBold" Margin="0,8,0,0">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                                    <Binding Path="SupportsTradeHistory"/>
+                                                    <Binding Path="RealizedPnl"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                         <TextBlock Text="已平仓交易" Foreground="#65719C" FontSize="10" Margin="0,7,0,0" />
                                     </StackPanel>
                                 </Border>
@@ -287,8 +304,15 @@
                                     <StackPanel>
                                         <TextBlock Text="交易次数" Style="{StaticResource MutedTextStyle}" />
                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                            <TextBlock Text="{Binding TradeCount}" Foreground="{StaticResource GoldBrush}"
-                                                       FontSize="25" FontWeight="SemiBold" />
+                                            <TextBlock  Foreground="{StaticResource GoldBrush}"
+                                            FontSize="25" FontWeight="SemiBold">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                                        <Binding Path="SupportsTradeHistory"/>
+                                                        <Binding Path="TradeCount"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                             <TextBlock Text=" 次" Foreground="#8B826C" FontSize="11" VerticalAlignment="Bottom" Margin="2,0,0,4" />
                                         </StackPanel>
                                         <TextBlock Text="完整交易" Foreground="#8B826C" FontSize="10" Margin="0,7,0,0" />
@@ -298,8 +322,15 @@
                                     <StackPanel>
                                         <TextBlock Text="今日连亏" Style="{StaticResource MutedTextStyle}" />
                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                            <TextBlock Text="{Binding ConsecutiveLosses}" Foreground="{Binding ConsecutiveLossesColor}"
-                                                       FontSize="25" FontWeight="SemiBold" />
+                                            <TextBlock  Foreground="{Binding ConsecutiveLossesColor}"
+                                            FontSize="25" FontWeight="SemiBold">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                                        <Binding Path="SupportsTradeHistory"/>
+                                                        <Binding Path="ConsecutiveLosses"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
                                             <TextBlock Text=" 次" Foreground="#987272" FontSize="11" VerticalAlignment="Bottom" Margin="2,0,0,4" />
                                         </StackPanel>
                                         <TextBlock Text="保持交易节奏" Foreground="#987272" FontSize="10" Margin="0,7,0,0" />
@@ -385,11 +416,25 @@
                                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
                                             <StackPanel>
                                                 <TextBlock Text="盈利次数" Style="{StaticResource MutedTextStyle}" />
-                                                <TextBlock Text="{Binding WinCount}" Foreground="{Binding WinCountColor}" FontSize="17" Margin="0,4,0,0" />
+                                                <TextBlock Foreground="{Binding WinCountColor}" FontSize="17" Margin="0,4,0,0">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                                            <Binding Path="SupportsTradeHistory"/>
+                                                            <Binding Path="WinCount"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1">
                                                 <TextBlock Text="亏损次数" Style="{StaticResource MutedTextStyle}" />
-                                                <TextBlock Text="{Binding LossCount}" Foreground="{Binding LossCountColor}" FontSize="17" Margin="0,4,0,0" />
+                                                <TextBlock Foreground="{Binding LossCountColor}" FontSize="17" Margin="0,4,0,0">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                                            <Binding Path="SupportsTradeHistory"/>
+                                                            <Binding Path="LossCount"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
                                             </StackPanel>
                                         </Grid>
                                     </Grid>
@@ -400,7 +445,14 @@
                                 <UniformGrid Columns="4">
                                     <StackPanel>
                                         <TextBlock Text="今日最高盈亏" Style="{StaticResource MutedTextStyle}" />
-                                        <TextBlock Text="{Binding HighWaterPnl, StringFormat={}{0:+0.##;-0.##;0}}" Foreground="{Binding HighWaterPnlColor}" FontSize="17" Margin="0,5,0,0" />
+                                        <TextBlock Foreground="{Binding HighWaterPnlColor}" FontSize="17" Margin="0,5,0,0">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="+0.##;-0.##;0">
+                                                    <Binding Path="SupportsTradeHistory"/>
+                                                    <Binding Path="HighWaterPnl"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </StackPanel>
                                     <StackPanel>
                                         <TextBlock Text="当前浮动盈亏" Style="{StaticResource MutedTextStyle}" />
@@ -408,7 +460,14 @@
                                     </StackPanel>
                                     <StackPanel>
                                         <TextBlock Text="当前盈利回吐" Style="{StaticResource MutedTextStyle}" />
-                                        <TextBlock Text="{Binding Giveback, StringFormat={}{0:0.##}}" Foreground="{Binding GivebackColor}" FontSize="17" Margin="0,5,0,0" />
+                                        <TextBlock Foreground="{Binding GivebackColor}" FontSize="17" Margin="0,5,0,0">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{StaticResource HistoryMetric}" ConverterParameter="0.##">
+                                                    <Binding Path="SupportsTradeHistory"/>
+                                                    <Binding Path="Giveback"/>
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
                                     </StackPanel>
                                     <StackPanel>
                                         <TextBlock Text="最大总仓位" Style="{StaticResource MutedTextStyle}" />
@@ -925,6 +984,7 @@
                             <StackPanel Margin="0,0,0,14">
                                 <TextBlock Text="设置中心" FontSize="20" FontWeight="SemiBold" />
                                 <TextBlock Text="调整桌宠行为、交易提醒和终端连接。" Style="{StaticResource MutedTextStyle}" Margin="0,5,0,0" />
+                                <Button Content="打开设置向导 / 切换 MT4、MT5" Command="{Binding ShowSetupCommand}" HorizontalAlignment="Left" Margin="0,12,0,0" />
                             </StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>

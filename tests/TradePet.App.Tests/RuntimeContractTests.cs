@@ -14,6 +14,43 @@ namespace TradePet.App.Tests;
 public sealed class RuntimeContractTests
 {
     [Fact]
+    public async Task QuickReview_TradeClosuresAndSnoozeOnlyQueueWithoutOpeningWindows()
+    {
+        var scheduler = new ManualAsyncScheduler();
+        var repository = DispatchProxy.Create<IReviewWorkspaceRepository, ThrowingProxy>();
+        var database = new AppDatabase(Path.Combine(Path.GetTempPath(), $"tradepet-quick-review-{Guid.NewGuid():N}.db"));
+        var dependencies = new TradePetRuntimeDependencies(database, repository,
+            DispatchProxy.Create<IReviewPackageWriter, ThrowingProxy>(),
+            DispatchProxy.Create<IReviewAttachmentStore, ThrowingProxy>(),
+            DispatchProxy.Create<IReviewBackupService, ThrowingProxy>(),
+            TimeProvider.System, scheduler, new AccountSessionCoordinator(), new MaintenanceCoordinator());
+        await using var runtime = new TradePetRuntime(
+            new TradePet.App.ViewModels.MainViewModel(scheduler), dependencies);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var queue = typeof(TradePetRuntime).GetMethod("QueueQuickReview", flags)!;
+        var pending = (ConcurrentDictionary<string, TradeRecord>)typeof(TradePetRuntime)
+            .GetField("_pendingQuickReviews", flags)!.GetValue(runtime)!;
+        var trade = Detail("account-a", 42).Trade;
+
+        queue.Invoke(runtime, [trade]);
+        queue.Invoke(runtime, [trade]);
+        queue.Invoke(runtime, [Detail("account-a", 43).Trade]);
+        queue.Invoke(runtime, [Detail("account-b", 42).Trade]);
+        Assert.Equal(3, pending.Count);
+
+        pending.Clear();
+        var reminder = (Task)typeof(TradePetRuntime).GetMethod("RemindQuickReviewLaterAsync", flags)!
+            .Invoke(runtime, [trade])!;
+        var delay = await scheduler.NextAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Equal(TimeSpan.FromMinutes(10), delay.Delay);
+        Assert.Empty(pending);
+        delay.Release();
+        await reminder.WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Equal(trade, Assert.Single(pending).Value);
+        Assert.Null(typeof(TradePetRuntime).GetField("_quickReviewWindow", flags)!.GetValue(runtime));
+    }
+
+    [Fact]
     public void ExportPreview_DefaultsToAllFilteredNoAttachmentsAndInvalidatesOnScopeOrAccountChange()
     {
         var viewModel = new ReviewWorkspaceViewModel(new ManualAsyncScheduler());
